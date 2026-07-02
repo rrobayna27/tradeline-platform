@@ -7,12 +7,13 @@ import { CompanyAvatar } from "@/components/company/company-avatar";
 import { ProjectCard } from "@/components/project/project-card";
 import {
   getGeneralContractorBySlug,
+  getGeneralContractors,
   getProjectsByGeneralContractor,
 } from "@/lib/repositories";
 import { METRO_LABELS } from "@/lib/constants";
 
 export async function generateStaticParams() {
-  const { generalContractors } = await import("@/data/sample/companies");
+  const generalContractors = await getGeneralContractors();
   return generalContractors.map((g) => ({ slug: g.slug }));
 }
 

@@ -1,15 +1,12 @@
 // Hand-written domain types mirroring prisma/schema.prisma.
 //
-// Why these exist instead of importing from "@prisma/client": generating the
-// real Prisma Client requires downloading its query/schema-engine binaries
-// from binaries.prisma.sh, which this build sandbox's network policy blocks.
-// That download works fine on a normal dev machine, CI runner, or Vercel —
-// it is purely a limitation of *this* session's sandbox. Once `DATABASE_URL`
-// points at a real Postgres and `npx prisma generate` has been run somewhere
-// with normal internet access, swap the repository implementation in
-// `src/lib/repositories/*` from the in-memory provider to the Prisma-backed
-// one in `src/lib/repositories/prisma/*` (already written, ready to go) and
-// these hand types can be replaced by the generated ones one model at a time.
+// These predate the live database (see README.md history) and are kept as
+// the app's UI-facing shape even now that src/lib/repositories/index.ts
+// reads from Prisma/Postgres — components depend on these types, not on
+// generated Prisma types directly, so the data source can change without
+// touching every page. A few fields below (…Name, …Names) are denormalized
+// on purpose: repositories resolve them via Prisma `include` at fetch time
+// so components never need to do their own follow-up lookups or awaits.
 
 export type Metro =
   | "SOUTHEAST"
@@ -158,6 +155,8 @@ export interface Subcontractor {
   certifications: Certification[];
   galleryUrls: string[];
   createdAt: string;
+  tradeNames?: string[];
+  countyNames?: string[];
 }
 
 export interface ProjectUpdateEntry {
@@ -206,6 +205,11 @@ export interface Project {
   updates: ProjectUpdateEntry[];
   photos: ProjectPhoto[];
   nearbyProjectIds: string[];
+  cityName?: string | null;
+  countyName?: string;
+  developerName?: string | null;
+  generalContractorName?: string | null;
+  tradeNames?: string[];
 }
 
 export interface Article {
@@ -231,6 +235,8 @@ export interface Article {
   publishedAt?: string | null;
   relatedArticleIds: string[];
   relatedProjectIds: string[];
+  developerName?: string | null;
+  projectName?: string | null;
 }
 
 export interface MarketStat {

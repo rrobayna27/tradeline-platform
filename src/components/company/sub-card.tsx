@@ -4,10 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { CompanyAvatar } from "./company-avatar";
 import { ShieldCheck } from "lucide-react";
 import type { Subcontractor } from "@/lib/types";
-import { tradeById } from "@/data/sample/trades";
 
 export function SubCard({ sub }: { sub: Subcontractor }) {
-  const tradeNames = sub.tradeIds.map((id) => tradeById.get(id)?.name).filter(Boolean);
+  const tradeNames = sub.tradeNames ?? [];
 
   return (
     <Link href={`/subcontractors/${sub.slug}`}>

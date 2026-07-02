@@ -4,13 +4,11 @@ import { Globe, Mail, Phone, ShieldCheck, Award } from "lucide-react";
 import { Section } from "@/components/shared/section";
 import { Badge } from "@/components/ui/badge";
 import { CompanyAvatar } from "@/components/company/company-avatar";
-import { getSubcontractorBySlug } from "@/lib/repositories";
-import { countyById } from "@/data/sample/geography";
-import { tradeById } from "@/data/sample/trades";
+import { getSubcontractorBySlug, searchSubcontractors } from "@/lib/repositories";
 
 export async function generateStaticParams() {
-  const { subcontractors } = await import("@/data/sample/companies");
-  return subcontractors.map((s) => ({ slug: s.slug }));
+  const { items } = await searchSubcontractors({ pageSize: 1000 });
+  return items.map((s) => ({ slug: s.slug }));
 }
 
 export async function generateMetadata({
@@ -32,8 +30,8 @@ export default async function SubDetailPage({ params }: { params: Promise<{ slug
   const sub = await getSubcontractorBySlug(slug);
   if (!sub) notFound();
 
-  const trades = sub.tradeIds.map((id) => tradeById.get(id)).filter(Boolean);
-  const counties = sub.countyIds.map((id) => countyById.get(id)).filter(Boolean);
+  const trades = sub.tradeNames ?? [];
+  const counties = sub.countyNames ?? [];
 
   return (
     <>
@@ -66,9 +64,9 @@ export default async function SubDetailPage({ params }: { params: Promise<{ slug
           <div>
             <h2 className="mb-3 text-lg font-semibold text-foreground">Trades</h2>
             <div className="flex flex-wrap gap-2">
-              {trades.map((t) => (
-                <Badge key={t!.id} className="border-accent/30 bg-accent/10 text-accent">
-                  {t!.name}
+              {trades.map((name) => (
+                <Badge key={name} className="border-accent/30 bg-accent/10 text-accent">
+                  {name}
                 </Badge>
               ))}
             </div>
@@ -77,8 +75,8 @@ export default async function SubDetailPage({ params }: { params: Promise<{ slug
           <div>
             <h2 className="mb-3 text-lg font-semibold text-foreground">Service areas</h2>
             <div className="flex flex-wrap gap-2">
-              {counties.map((c) => (
-                <Badge key={c!.id}>{c!.name}</Badge>
+              {counties.map((name) => (
+                <Badge key={name}>{name}</Badge>
               ))}
             </div>
           </div>

@@ -7,11 +7,17 @@ import { ArticleCard } from "@/components/article/article-card";
 import { ProjectCard } from "@/components/project/project-card";
 import { ARTICLE_CATEGORY_LABELS, SITE_URL } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
-import { getArticleBySlug, getRelatedArticles, lookupDeveloper } from "@/lib/repositories";
-import { projectById } from "@/data/sample/projects";
+import {
+  getArticleBySlug,
+  getProjectById,
+  getPublishedArticles,
+  getRelatedArticles,
+  getRelatedProjectsForArticle,
+  lookupDeveloper,
+} from "@/lib/repositories";
 
 export async function generateStaticParams() {
-  const { articles } = await import("@/data/sample/articles");
+  const articles = await getPublishedArticles();
   return articles.map((a) => ({ slug: a.slug }));
 }
 
@@ -51,10 +57,12 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const [related] = await Promise.all([getRelatedArticles(article, 3)]);
-  const developer = lookupDeveloper(article.developerId);
-  const relatedProjects = article.relatedProjectIds.map((id) => projectById.get(id)).filter(Boolean);
-  const linkedProject = article.projectId ? projectById.get(article.projectId) : undefined;
+  const [related, developer, relatedProjects, linkedProject] = await Promise.all([
+    getRelatedArticles(article, 3),
+    lookupDeveloper(article.developerId),
+    getRelatedProjectsForArticle(article, 4),
+    article.projectId ? getProjectById(article.projectId) : Promise.resolve(undefined),
+  ]);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -150,7 +158,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
             <h2 className="mb-4 text-lg font-semibold text-foreground">Related projects</h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {relatedProjects.map((p) => (
-                <ProjectCard key={p!.id} project={p!} />
+                <ProjectCard key={p.id} project={p} />
               ))}
             </div>
           </div>

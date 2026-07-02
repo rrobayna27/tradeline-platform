@@ -8,20 +8,17 @@ import { ArticleCard } from "@/components/article/article-card";
 import { LinkButton } from "@/components/ui/button";
 import {
   getArticlesByProject,
+  getGeneralContractorById,
   getNearbyProjects,
   getProjectBySlug,
-  lookupCity,
-  lookupCounty,
-  lookupDeveloper,
-  lookupGC,
+  searchProjects,
 } from "@/lib/repositories";
-import { tradeById } from "@/data/sample/trades";
 import { PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, SITE_URL } from "@/lib/constants";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export async function generateStaticParams() {
-  const { projects } = await import("@/data/sample/projects");
-  return projects.map((p) => ({ slug: p.slug }));
+  const { items } = await searchProjects({ pageSize: 1000 });
+  return items.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({
@@ -33,8 +30,7 @@ export async function generateMetadata({
   const project = await getProjectBySlug(slug);
   if (!project) return {};
 
-  const city = lookupCity(project.cityId);
-  const title = `${project.name} — ${city?.name ?? ""} Project Profile`;
+  const title = `${project.name} — ${project.cityName ?? ""} Project Profile`;
   const description = project.description ?? `${project.name} project details, timeline, and status.`;
 
   return {
@@ -50,16 +46,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const project = await getProjectBySlug(slug);
   if (!project) notFound();
 
-  const city = lookupCity(project.cityId);
-  const county = lookupCounty(project.countyId);
-  const developer = lookupDeveloper(project.developerId);
-  const gc = lookupGC(project.generalContractorId);
-  const [nearby, relatedArticles] = await Promise.all([
+  const [nearby, relatedArticles, gc] = await Promise.all([
     getNearbyProjects(project, 4),
     getArticlesByProject(project.id),
+    project.generalContractorId ? getGeneralContractorById(project.generalContractorId) : Promise.resolve(undefined),
   ]);
 
-  const trades = project.tradeIds.map((id) => tradeById.get(id)).filter(Boolean);
+  const trades = project.tradeNames ?? [];
   const latestUpdate = project.updates[0];
 
   // Schema.org has no canonical "construction project" type, so this models
@@ -74,8 +67,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       ? {
           "@type": "PostalAddress",
           streetAddress: project.address,
-          addressLocality: city?.name,
-          addressRegion: county?.state ?? "FL",
+          addressLocality: project.cityName,
+          addressRegion: "FL",
         }
       : undefined,
     geo:
@@ -101,14 +94,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           <p className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
             <MapPin size={15} />
             {project.address ? `${project.address}, ` : ""}
-            {city?.name}, {county?.name}
+            {project.cityName}, {project.countyName}
           </p>
 
           <div className="mt-8 grid grid-cols-2 gap-6 border-t border-border pt-6 sm:grid-cols-4">
             <Stat label="Estimated value" value={formatCurrency(project.estimatedValueUsd)} />
             <Stat label="Est. completion" value={formatDate(project.estimatedCompletion)} />
-            <Stat label="Developer" value={developer?.name ?? project.owner ?? "—"} />
-            <Stat label="General contractor" value={gc?.name ?? "—"} />
+            <Stat label="Developer" value={project.developerName ?? project.owner ?? "—"} />
+            <Stat label="General contractor" value={project.generalContractorName ?? "—"} />
           </div>
         </Section>
       </div>
@@ -184,10 +177,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <dl className="space-y-3 text-sm">
               <DetailRow label="Status" value={PROJECT_STATUS_LABELS[project.status]} />
               <DetailRow label="Type" value={PROJECT_TYPE_LABELS[project.projectType]} />
-              <DetailRow label="County" value={county?.name} />
-              <DetailRow label="City" value={city?.name} />
-              <DetailRow label="Developer" value={developer?.name ?? project.owner} />
-              <DetailRow label="General contractor" value={gc?.name} />
+              <DetailRow label="County" value={project.countyName} />
+              <DetailRow label="City" value={project.cityName} />
+              <DetailRow label="Developer" value={project.developerName ?? project.owner} />
+              <DetailRow label="General contractor" value={project.generalContractorName} />
               <DetailRow label="Architect" value={project.architect} />
               <DetailRow label="Engineer" value={project.engineer} />
               <DetailRow label="Estimated value" value={formatCurrency(project.estimatedValueUsd)} />
@@ -202,8 +195,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <HardHat size={15} /> Trades likely needed
               </h3>
               <div className="flex flex-wrap gap-2">
-                {trades.map((t) => (
-                  <Badge key={t!.id}>{t!.name}</Badge>
+                {trades.map((name) => (
+                  <Badge key={name}>{name}</Badge>
                 ))}
               </div>
             </div>
@@ -253,7 +246,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <CalendarDays size={15} /> Location
             </h3>
             <p className="mb-3 text-sm text-muted-foreground">
-              {project.address}, {city?.name}, {county?.state}
+              {project.address}, {project.cityName}, FL
             </p>
             <LinkButton href={`/map?project=${project.slug}`} variant="outline" size="sm" className="w-full">
               View on map
