@@ -34,8 +34,9 @@ model County {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cities   City[]
-  projects Project[]
+  cities         City[]
+  projects       Project[]
+  subServiceAreas SubServiceArea[]
 
   @@index([metro])
 }
