@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/ingest/miami-dade-permits",
+      "schedule": "0 13 * * *"
+    }
+  ]
+}

@@ -22,7 +22,7 @@ const FEATURE_SERVICE_QUERY_URL =
   "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/BuildingPermit_gdb/FeatureServer/0/query";
 const DATASET_PAGE_URL = "https://gis-mdc.opendata.arcgis.com/datasets/MDC::building-permit";
 
-const MIN_ESTIMATED_VALUE = 250_000;
+const MIN_ESTIMATED_VALUE = 100_000;
 const LOOKBACK_DAYS = 365;
 const MAX_RECORDS_PER_RUN = 200;
 
