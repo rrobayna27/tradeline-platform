@@ -51,7 +51,7 @@ export const developers: Developer[] = [
   },
 ];
 
-export const generalContractors: GeneralContractor[] = [
+const generalContractorsBase: Omit<GeneralContractor, "isSample">[] = [
   {
     id: "gc-ironbridge",
     name: "Ironbridge Construction Group",
@@ -178,11 +178,16 @@ export const generalContractors: GeneralContractor[] = [
   },
 ];
 
+export const generalContractors: GeneralContractor[] = generalContractorsBase.map((g) => ({
+  ...g,
+  isSample: true,
+}));
+
 function trade(slug: string) {
   return tradeBySlug.get(slug)!.id;
 }
 
-export const subcontractors: Subcontractor[] = [
+const subcontractorsBase: Omit<Subcontractor, "isSample">[] = [
   {
     id: "sub-atlas-concrete",
     name: "Atlas Concrete & Sitework",
@@ -473,6 +478,11 @@ export const subcontractors: Subcontractor[] = [
     createdAt: "2025-05-19T00:00:00.000Z",
   },
 ];
+
+export const subcontractors: Subcontractor[] = subcontractorsBase.map((s) => ({
+  ...s,
+  isSample: true,
+}));
 
 export const developerById = new Map(developers.map((d) => [d.id, d]));
 export const developerBySlug = new Map(developers.map((d) => [d.slug, d]));
