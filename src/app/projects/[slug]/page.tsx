@@ -187,6 +187,18 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <DetailRow label="Estimated completion" value={formatDate(project.estimatedCompletion)} />
               <DetailRow label="Latest update" value={latestUpdate ? formatDate(latestUpdate.eventDate) : undefined} />
             </dl>
+            {project.sourceName && (
+              <p className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
+                Source:{" "}
+                {project.sourceUrl ? (
+                  <a href={project.sourceUrl} target="_blank" rel="noreferrer" className="underline hover:text-accent">
+                    {project.sourceName}
+                  </a>
+                ) : (
+                  project.sourceName
+                )}
+              </p>
+            )}
           </div>
 
           {trades.length > 0 && (

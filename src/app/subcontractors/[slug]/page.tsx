@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Globe, Mail, Phone, ShieldCheck, Award } from "lucide-react";
 import { Section } from "@/components/shared/section";
-import { Badge } from "@/components/ui/badge";
+import { Badge, SampleDataBadge } from "@/components/ui/badge";
 import { CompanyAvatar } from "@/components/company/company-avatar";
 import { getSubcontractorBySlug, searchSubcontractors } from "@/lib/repositories";
 
@@ -51,6 +51,7 @@ export default async function SubDetailPage({ params }: { params: Promise<{ slug
                 {sub.isWBE && <Badge>WBE</Badge>}
                 {sub.isMinorityOwned && <Badge>Minority-owned</Badge>}
                 {sub.unionStatus && <Badge>{sub.unionStatus.replaceAll("_", "-")}</Badge>}
+                {sub.isSample && <SampleDataBadge />}
               </div>
               <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">{sub.name}</h1>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{sub.description}</p>

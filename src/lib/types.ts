@@ -116,11 +116,13 @@ export interface GeneralContractor {
   website?: string | null;
   phone?: string | null;
   email?: string | null;
+  licenseNumber?: string | null;
   companySize?: CompanySize | null;
   marketsServed: Metro[];
   isFeatured: boolean;
   isClaimed: boolean;
   planTier: PlanTier;
+  isSample: boolean;
   offices: GeneralContractorOffice[];
   createdAt: string;
 }
@@ -150,6 +152,7 @@ export interface Subcontractor {
   isFeatured: boolean;
   isClaimed: boolean;
   planTier: PlanTier;
+  isSample: boolean;
   tradeIds: string[];
   countyIds: string[];
   certifications: Certification[];
@@ -210,6 +213,8 @@ export interface Project {
   developerName?: string | null;
   generalContractorName?: string | null;
   tradeNames?: string[];
+  sourceName?: string | null;
+  sourceUrl?: string | null;
 }
 
 export interface Article {

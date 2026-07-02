@@ -118,11 +118,13 @@ model GeneralContractor {
   website      String?
   phone        String?
   email        String?
+  licenseNumber String?     @unique // state contractor license number, when known (e.g. from a permit feed)
   companySize  CompanySize?
   marketsServed Metro[]
   isFeatured   Boolean      @default(false)
   isClaimed    Boolean      @default(false) // claimed by a real GC user
   planTier     PlanTier     @default(FREE)
+  isSample     Boolean      @default(true) // true until real, verified data replaces it
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -180,6 +182,7 @@ model Subcontractor {
   isFeatured       Boolean      @default(false)
   isClaimed        Boolean      @default(false)
   planTier         PlanTier     @default(FREE)
+  isSample         Boolean      @default(true) // true until real, verified data replaces it
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -325,6 +328,14 @@ model Project {
   isFeatured Boolean @default(false)
   isSample   Boolean @default(true) // true until real, verified data replaces it
 
+  // Provenance for auto-ingested records (e.g. county permit feeds). Lets an
+  // ingestion job upsert idempotently instead of creating duplicates on
+  // every run, and lets the UI disclose where a record came from.
+  sourceName      String? // e.g. "miami-dade-permits"
+  sourceRecordId  String? // e.g. the permit's PROCNUM
+  sourceUrl       String?
+  sourceUpdatedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -334,6 +345,7 @@ model Project {
   nearbyOf      NearbyProject[]  @relation("NearbyFrom")
   nearbyTo      NearbyProject[]  @relation("NearbyTo")
 
+  @@unique([sourceName, sourceRecordId])
   @@index([countyId])
   @@index([cityId])
   @@index([status])

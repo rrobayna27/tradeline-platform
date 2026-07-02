@@ -90,11 +90,13 @@ function mapGC(g: GCWithOffices): GeneralContractor {
     website: g.website,
     phone: g.phone,
     email: g.email,
+    licenseNumber: g.licenseNumber,
     companySize: g.companySize,
     marketsServed: g.marketsServed,
     isFeatured: g.isFeatured,
     isClaimed: g.isClaimed,
     planTier: g.planTier,
+    isSample: g.isSample,
     offices: g.offices.map((o) => ({
       id: o.id,
       label: o.label,
@@ -134,6 +136,7 @@ function mapSub(s: SubWithRelations): Subcontractor {
     isFeatured: s.isFeatured,
     isClaimed: s.isClaimed,
     planTier: s.planTier,
+    isSample: s.isSample,
     tradeIds: s.trades.map((t) => t.tradeId),
     tradeNames: s.trades.map((t) => t.trade.name),
     countyIds: s.serviceAreas.map((a) => a.countyId),
@@ -200,6 +203,8 @@ function mapProject(p: ProjectWithRelations): Project {
     countyName: p.county?.name,
     developerName: p.developer?.name ?? null,
     generalContractorName: p.generalContractor?.name ?? null,
+    sourceName: p.sourceName,
+    sourceUrl: p.sourceUrl,
   };
 }
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CardHover } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Badge, SampleDataBadge } from "@/components/ui/badge";
 import { CompanyAvatar } from "./company-avatar";
 import { ShieldCheck } from "lucide-react";
 import type { Subcontractor } from "@/lib/types";
@@ -26,6 +26,7 @@ export function SubCard({ sub }: { sub: Subcontractor }) {
             </Badge>
           )}
           {sub.yearsInBusiness && <Badge>{sub.yearsInBusiness} yrs in business</Badge>}
+          {sub.isSample && <SampleDataBadge />}
         </div>
       </CardHover>
     </Link>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CardHover } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Badge, SampleDataBadge } from "@/components/ui/badge";
 import { CompanyAvatar } from "./company-avatar";
 import { METRO_LABELS } from "@/lib/constants";
 import type { GeneralContractor } from "@/lib/types";
@@ -22,6 +22,7 @@ export function GCCard({ gc }: { gc: GeneralContractor }) {
         <div className="flex items-center gap-2 border-t border-border pt-3">
           {gc.isClaimed && <Badge className="border-accent/30 bg-accent/10 text-accent">Verified</Badge>}
           {gc.planTier === "PRO" && <Badge className="border-highlight/40 bg-highlight/10 text-highlight">Pro</Badge>}
+          {gc.isSample && <SampleDataBadge />}
         </div>
       </CardHover>
     </Link>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Globe, Mail, Phone, MapPin } from "lucide-react";
 import { Section } from "@/components/shared/section";
-import { Badge } from "@/components/ui/badge";
+import { Badge, SampleDataBadge } from "@/components/ui/badge";
 import { CompanyAvatar } from "@/components/company/company-avatar";
 import { ProjectCard } from "@/components/project/project-card";
 import {
@@ -50,6 +50,7 @@ export default async function GCDetailPage({ params }: { params: Promise<{ slug:
               <div className="mb-2 flex flex-wrap gap-2">
                 {gc.isClaimed && <Badge className="border-accent/30 bg-accent/10 text-accent">Verified profile</Badge>}
                 {gc.planTier === "PRO" && <Badge className="border-highlight/40 bg-highlight/10 text-highlight">Pro</Badge>}
+                {gc.isSample && <SampleDataBadge />}
               </div>
               <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">{gc.name}</h1>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{gc.description}</p>

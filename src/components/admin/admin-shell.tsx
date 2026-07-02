@@ -10,6 +10,7 @@ import {
   Mail,
   Settings,
   Wrench,
+  Download,
 } from "lucide-react";
 
 const navGroups = [
@@ -26,6 +27,7 @@ const navGroups = [
     items: [
       { href: "/admin/projects", label: "Projects", icon: Wrench },
       { href: "/admin/developers", label: "Developers", icon: Building2 },
+      { href: "/admin/ingestion", label: "Data Ingestion", icon: Download },
     ],
   },
   {
