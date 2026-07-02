@@ -1,0 +1,177 @@
+@import "tailwindcss";
+
+/* Tradeline design system — Bloomberg/Linear/Stripe-grade minimalism.
+   Brand: deep navy, teal accent, amber highlight. Archivo (display/body),
+   Space Mono (data/numerals/labels). Light + dark themes via .dark class. */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Brand core */
+  --navy-950: #0a1220;
+  --navy-900: #13233b;
+  --navy-800: #1b2f4d;
+  --navy-700: #263f63;
+  --teal-600: #0e7c86;
+  --teal-500: #12939f;
+  --teal-400: #37b3bd;
+  --amber-500: #e8a13d;
+  --amber-400: #f0b559;
+
+  /* Surface + text (light) */
+  --background: #f7f8fa;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --border: #e4e7ec;
+  --foreground: #0f1a2b;
+  --muted: #5b6779;
+  --muted-foreground: #6b7686;
+
+  --accent: var(--teal-600);
+  --accent-foreground: #ffffff;
+  --highlight: var(--amber-500);
+
+  --status-proposed: #94a3b8;
+  --status-planning: #818cf8;
+  --status-approved: #38bdf8;
+  --status-permitted: #22c1c3;
+  --status-sitework: #0e7c86;
+  --status-foundation: #a16207;
+  --status-vertical: #f0b559;
+  --status-topped-out: #fb923c;
+  --status-finishing: #a3e635;
+  --status-completed: #22c55e;
+  --status-cancelled: #ef4444;
+  --status-onhold: #94a3b8;
+
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: #0a1220;
+  --surface: #101c30;
+  --surface-raised: #16243b;
+  --border: #223350;
+  --foreground: #eef2f7;
+  --muted: #94a3b8;
+  --muted-foreground: #8b98ac;
+
+  --accent: var(--teal-400);
+  --accent-foreground: #06171b;
+  --highlight: var(--amber-400);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-highlight: var(--highlight);
+
+  --color-navy-950: var(--navy-950);
+  --color-navy-900: var(--navy-900);
+  --color-navy-800: var(--navy-800);
+  --color-navy-700: var(--navy-700);
+  --color-teal-600: var(--teal-600);
+  --color-teal-500: var(--teal-500);
+  --color-teal-400: var(--teal-400);
+  --color-amber-500: var(--amber-500);
+  --color-amber-400: var(--amber-400);
+
+  --color-status-proposed: var(--status-proposed);
+  --color-status-planning: var(--status-planning);
+  --color-status-approved: var(--status-approved);
+  --color-status-permitted: var(--status-permitted);
+  --color-status-sitework: var(--status-sitework);
+  --color-status-foundation: var(--status-foundation);
+  --color-status-vertical: var(--status-vertical);
+  --color-status-topped-out: var(--status-topped-out);
+  --color-status-finishing: var(--status-finishing);
+  --color-status-completed: var(--status-completed);
+  --color-status-cancelled: var(--status-cancelled);
+  --color-status-onhold: var(--status-onhold);
+
+  /* Falls back to solid system-font stacks in this build (see layout.tsx for
+     why next/font/google isn't wired live); swap to --font-archivo /
+     --font-space-mono once deployed somewhere with normal internet access. */
+  --font-sans: ui-sans-serif, "Inter", "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Space Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 0.25rem);
+  --radius-sm: calc(var(--radius) - 0.375rem);
+
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-rise: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "ss01" 1, "cv01" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* Focus ring baseline for accessibility */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.container-page {
+  width: 100%;
+  max-width: 90rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .container-page {
+    padding-inline: 2rem;
+  }
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}

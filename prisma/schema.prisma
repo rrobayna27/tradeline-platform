@@ -1,0 +1,616 @@
+// Tradeline — Construction Intelligence Platform
+// Prisma schema (PostgreSQL). Prisma 6.x, classic prisma-client-js generator.
+// Ship target: managed Postgres (Neon / Supabase / Railway / RDS).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// GEOGRAPHY — built geography-aware from day one; metros are turned on
+// individually once seeded ("build national architecture, launch local").
+// ──────────────────────────────────────────────────────────────────────────
+
+enum Metro {
+  SOUTHEAST // Miami-Dade, Broward, Palm Beach, Monroe
+  TREASURE_COAST // Martin, St. Lucie, Indian River, Okeechobee
+  SOUTHWEST // Lee, Collier, Charlotte, Sarasota, Manatee
+  TAMPA_BAY // Hillsborough, Pinellas, Pasco, Polk
+  ORLANDO_CENTRAL // Orange, Seminole, Osceola, Lake, Brevard, Volusia
+}
+
+model County {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  metro     Metro
+  state     String   @default("FL")
+  isLive    Boolean  @default(false) // metro switched on for the public site
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cities   City[]
+  projects Project[]
+
+  @@index([metro])
+}
+
+model City {
+  id       String @id @default(cuid())
+  name     String
+  slug     String @unique
+  county   County @relation(fields: [countyId], references: [id], onDelete: Cascade)
+  countyId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects       Project[]
+  gcOffices      GeneralContractorOffice[]
+  subServiceArea SubServiceArea[]
+
+  @@unique([countyId, slug])
+  @@index([countyId])
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// TRADES
+// ──────────────────────────────────────────────────────────────────────────
+
+model Trade {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  isCustom    Boolean @default(false)
+  description String?
+
+  createdAt DateTime @default(now())
+
+  subcontractors SubcontractorTrade[]
+  projectTrades  ProjectTrade[]
+
+  @@index([slug])
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// COMPANIES — Developers, General Contractors, Subcontractors
+// ──────────────────────────────────────────────────────────────────────────
+
+model Developer {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  logoUrl     String?
+  description String?
+  website     String?
+  phone       String?
+  email       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects Project[]
+  articles Article[]
+
+  @@index([slug])
+}
+
+enum CompanySize {
+  MICRO // 1-10
+  SMALL // 11-50
+  MEDIUM // 51-200
+  LARGE // 201-1000
+  ENTERPRISE // 1000+
+}
+
+model GeneralContractor {
+  id           String       @id @default(cuid())
+  name         String
+  slug         String       @unique
+  logoUrl      String?
+  description  String?
+  website      String?
+  phone        String?
+  email        String?
+  companySize  CompanySize?
+  marketsServed Metro[]
+  isFeatured   Boolean      @default(false)
+  isClaimed    Boolean      @default(false) // claimed by a real GC user
+  planTier     PlanTier     @default(FREE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  offices          GeneralContractorOffice[]
+  projectsAsGC     Project[]                 @relation("ProjectGeneralContractor")
+  users            User[]
+  invitesSent      BidInvite[]
+
+  @@index([slug])
+  @@index([isFeatured])
+}
+
+model GeneralContractorOffice {
+  id     String            @id @default(cuid())
+  gc     GeneralContractor @relation(fields: [gcId], references: [id], onDelete: Cascade)
+  gcId   String
+  label  String? // "HQ", "Broward office", etc.
+  city   City?             @relation(fields: [cityId], references: [id])
+  cityId String?
+  address String?
+  phone  String?
+
+  @@index([gcId])
+  @@index([cityId])
+}
+
+enum PlanTier {
+  FREE
+  PRO
+}
+
+enum UnionStatus {
+  UNION
+  NON_UNION
+  BOTH
+}
+
+model Subcontractor {
+  id               String       @id @default(cuid())
+  name             String
+  slug             String       @unique
+  logoUrl          String?
+  description      String?
+  website          String?
+  phone            String?
+  email            String?
+  licenseNumber    String?
+  insuranceVerified Boolean     @default(false)
+  yearsInBusiness  Int?
+  companySize      CompanySize?
+  isMinorityOwned  Boolean?
+  isWBE            Boolean?
+  unionStatus      UnionStatus?
+  isFeatured       Boolean      @default(false)
+  isClaimed        Boolean      @default(false)
+  planTier         PlanTier     @default(FREE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trades          SubcontractorTrade[]
+  serviceAreas    SubServiceArea[]
+  certifications  Certification[]
+  galleryPhotos   SubcontractorPhoto[]
+  users           User[]
+  bidInvites      BidInvite[]
+
+  @@index([slug])
+  @@index([isFeatured])
+}
+
+model SubcontractorTrade {
+  subcontractor   Subcontractor @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+  subcontractorId String
+  trade           Trade         @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  tradeId         String
+  isPrimary       Boolean       @default(false)
+
+  @@id([subcontractorId, tradeId])
+  @@index([tradeId])
+}
+
+model SubServiceArea {
+  id              String        @id @default(cuid())
+  subcontractor   Subcontractor @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+  subcontractorId String
+  county          County        @relation(fields: [countyId], references: [id])
+  countyId        String
+  city            City?         @relation(fields: [cityId], references: [id])
+  cityId          String?
+
+  @@index([subcontractorId])
+  @@index([countyId])
+}
+
+model Certification {
+  id              String        @id @default(cuid())
+  subcontractor   Subcontractor @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+  subcontractorId String
+  name            String
+  issuedBy        String?
+  issuedAt        DateTime?
+  expiresAt       DateTime?
+
+  @@index([subcontractorId])
+}
+
+model SubcontractorPhoto {
+  id              String        @id @default(cuid())
+  subcontractor   Subcontractor @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+  subcontractorId String
+  url             String
+  caption         String?
+  sortOrder       Int           @default(0)
+
+  @@index([subcontractorId])
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// PROJECTS — the central hub
+// ──────────────────────────────────────────────────────────────────────────
+
+enum ProjectStatus {
+  PROPOSED
+  PLANNING
+  APPROVED
+  PERMITTED
+  SITE_WORK
+  FOUNDATION
+  VERTICAL_CONSTRUCTION
+  TOPPED_OUT
+  FINISHING
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum ProjectType {
+  RESIDENTIAL_SINGLE_FAMILY
+  MULTIFAMILY
+  MIXED_USE
+  OFFICE
+  RETAIL
+  INDUSTRIAL
+  HOSPITALITY
+  HEALTHCARE
+  EDUCATION
+  GOVERNMENT_INSTITUTIONAL
+  INFRASTRUCTURE
+  RELIGIOUS
+  OTHER
+}
+
+enum BidPhase {
+  NOT_YET_BIDDING
+  BIDDING_OPEN
+  BIDDING_CLOSED
+  AWARDED
+  NOT_APPLICABLE
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  address     String?
+  city        City?    @relation(fields: [cityId], references: [id])
+  cityId      String?
+  county      County   @relation(fields: [countyId], references: [id])
+  countyId    String
+  latitude    Float?
+  longitude   Float?
+
+  developer   Developer? @relation(fields: [developerId], references: [id])
+  developerId String?
+  owner       String? // owner entity, when distinct from developer
+
+  generalContractor   GeneralContractor? @relation("ProjectGeneralContractor", fields: [generalContractorId], references: [id])
+  generalContractorId String?
+  architect           String?
+  engineer            String?
+
+  estimatedValueUsd Decimal? @db.Decimal(14, 2)
+  projectType       ProjectType
+  status            ProjectStatus @default(PROPOSED)
+  bidPhase          BidPhase      @default(NOT_APPLICABLE)
+
+  estimatedCompletion DateTime?
+  description         String?  @db.Text
+  whyItMatters         String? @db.Text
+  marketImpact         String? @db.Text
+
+  // Lead-gen surface (public GC contact info only, when publicly available)
+  gcContactPhone   String?
+  gcContactEmail   String?
+  gcContactWebsite String?
+  tradesLikelyNeeded ProjectTrade[]
+
+  isFeatured Boolean @default(false)
+  isSample   Boolean @default(true) // true until real, verified data replaces it
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  updates       ProjectUpdate[]
+  photos        ProjectPhoto[]
+  articles      Article[]
+  nearbyOf      NearbyProject[]  @relation("NearbyFrom")
+  nearbyTo      NearbyProject[]  @relation("NearbyTo")
+
+  @@index([countyId])
+  @@index([cityId])
+  @@index([status])
+  @@index([projectType])
+  @@index([developerId])
+  @@index([generalContractorId])
+  @@index([slug])
+}
+
+model ProjectTrade {
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  trade     Trade   @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  tradeId   String
+
+  @@id([projectId, tradeId])
+  @@index([tradeId])
+}
+
+model ProjectUpdate {
+  id        String   @id @default(cuid())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  title     String
+  body      String   @db.Text
+  eventDate DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model ProjectPhoto {
+  id        String  @id @default(cuid())
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  url       String
+  caption   String?
+  sortOrder Int     @default(0)
+
+  @@index([projectId])
+}
+
+model NearbyProject {
+  id             String  @id @default(cuid())
+  fromProject    Project @relation("NearbyFrom", fields: [fromProjectId], references: [id], onDelete: Cascade)
+  fromProjectId  String
+  toProject      Project @relation("NearbyTo", fields: [toProjectId], references: [id], onDelete: Cascade)
+  toProjectId    String
+  distanceMiles  Float?
+
+  @@unique([fromProjectId, toProjectId])
+  @@index([toProjectId])
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// LEAD GEN — invitations to bid (future-ready ITB module, lightweight now)
+// ──────────────────────────────────────────────────────────────────────────
+
+enum BidInviteStatus {
+  SENT
+  VIEWED
+  INTERESTED
+  DECLINED
+  BID_SUBMITTED
+}
+
+model BidInvite {
+  id              String            @id @default(cuid())
+  generalContractor   GeneralContractor @relation(fields: [generalContractorId], references: [id], onDelete: Cascade)
+  generalContractorId String
+  subcontractor       Subcontractor     @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+  subcontractorId     String
+  projectId           String
+  status              BidInviteStatus   @default(SENT)
+  message             String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([generalContractorId])
+  @@index([subcontractorId])
+  @@index([projectId])
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// NEWS / ORIGINAL EDITORIAL CONTENT
+// ──────────────────────────────────────────────────────────────────────────
+
+enum ArticleStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ArticleCategory {
+  BREAKING_DEVELOPMENT
+  NEW_PROJECT
+  PERMIT_FILING
+  COMMISSION_MEETING
+  MARKET_ANALYSIS
+  COMPANY_NEWS
+  POLICY_REGULATION
+}
+
+model Article {
+  id          String          @id @default(cuid())
+  headline    String
+  slug        String          @unique
+  summary     String
+  body        String          @db.Text
+  featuredImageUrl String?
+  category    ArticleCategory
+  status      ArticleStatus   @default(DRAFT)
+
+  project     Project?   @relation(fields: [projectId], references: [id])
+  projectId   String?
+  developer   Developer? @relation(fields: [developerId], references: [id])
+  developerId String?
+
+  location       String?
+  timelineNote   String?
+  whyItMatters   String? @db.Text
+  marketImpact   String? @db.Text
+
+  authorName  String  @default("Tradeline Newsroom")
+  isSample    Boolean @default(true)
+
+  metaTitle       String?
+  metaDescription String?
+  ogImageUrl      String?
+  canonicalUrl    String?
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  relatedFrom ArticleRelation[] @relation("ArticleRelationFrom")
+  relatedTo   ArticleRelation[] @relation("ArticleRelationTo")
+
+  @@index([status])
+  @@index([category])
+  @@index([slug])
+  @@index([publishedAt])
+}
+
+model ArticleRelation {
+  id             String  @id @default(cuid())
+  fromArticle    Article @relation("ArticleRelationFrom", fields: [fromArticleId], references: [id], onDelete: Cascade)
+  fromArticleId  String
+  toArticle      Article @relation("ArticleRelationTo", fields: [toArticleId], references: [id], onDelete: Cascade)
+  toArticleId    String
+
+  @@unique([fromArticleId, toArticleId])
+  @@index([toArticleId])
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// USERS / AUTH (Auth.js / NextAuth Prisma adapter models included)
+// ──────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  GC
+  SUB
+  MEMBER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          Role      @default(MEMBER)
+
+  generalContractor   GeneralContractor? @relation(fields: [generalContractorId], references: [id])
+  generalContractorId String?
+  subcontractor       Subcontractor?     @relation(fields: [subcontractorId], references: [id])
+  subcontractorId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+
+  @@index([generalContractorId])
+  @@index([subcontractorId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// NEWSLETTER / ADS / SITE SETTINGS (admin-managed)
+// ──────────────────────────────────────────────────────────────────────────
+
+model NewsletterSubscriber {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  isActive      Boolean  @default(true)
+  subscribedAt  DateTime @default(now())
+  county        String? // optional geo targeting for the weekly digest
+}
+
+enum AdPlacement {
+  HOMEPAGE_BANNER
+  DIRECTORY_SIDEBAR
+  ARTICLE_INLINE
+  NEWSLETTER
+}
+
+model Advertisement {
+  id         String      @id @default(cuid())
+  name       String
+  placement  AdPlacement
+  imageUrl   String
+  targetUrl  String
+  isActive   Boolean     @default(true)
+  startsAt   DateTime?
+  endsAt     DateTime?
+  impressions Int        @default(0)
+  clicks      Int        @default(0)
+
+  createdAt DateTime @default(now())
+}
+
+model SiteSetting {
+  key   String @id
+  value String @db.Text
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// MARKET STATISTICS (cached homepage/newsletter numbers)
+// ──────────────────────────────────────────────────────────────────────────
+
+model MarketStat {
+  id        String   @id @default(cuid())
+  metro     Metro
+  label     String // "Active projects", "Total pipeline value", etc.
+  value     String
+  asOf      DateTime @default(now())
+
+  @@index([metro])
+}
