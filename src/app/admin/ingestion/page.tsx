@@ -11,6 +11,28 @@ export default function AdminIngestionPage() {
       />
 
       <IngestionTrigger
+        endpoint="/api/admin/ingest/bidlog"
+        label="Your bid log — Current Projects List 2026"
+        statKeys={[
+          ["fetched", "Jobs"],
+          ["created", "Created"],
+          ["updated", "Already imported"],
+          ["skipped", "Skipped"],
+          ["errors", "Errors"],
+        ]}
+      />
+
+      <div className="rounded-xl border border-border bg-surface p-5 text-sm text-muted-foreground">
+        <p className="mb-2 font-medium text-foreground">How this works</p>
+        <p>
+          Imports your own real bid history — 1,981 unique jobs and 509 general contractors,
+          deduplicated from &quot;Current Projects List 2026.numbers&quot; (2023–2026). Contact emails
+          land on the matching GC profile as Pro-only content. Safe to re-run — jobs are keyed so it
+          never creates duplicates.
+        </p>
+      </div>
+
+      <IngestionTrigger
         endpoint="/api/admin/ingest/miami-dade-permits"
         label="Miami-Dade County — building permits"
         statKeys={[
