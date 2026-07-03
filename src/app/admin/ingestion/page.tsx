@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { IngestionTrigger } from "./ingestion-trigger";
 
@@ -6,17 +7,20 @@ export default function AdminIngestionPage() {
     <div className="max-w-2xl space-y-6">
       <AdminPageHeader
         title="Data ingestion"
-        description="Pull real projects in from public data sources. Each source only reads from the government agency's own public feed — never from a paid aggregator like DemandStar or ConstructConnect."
+        description="Pull real projects and news in from public sources. Nothing here scrapes a paid/ToS-protected platform like DemandStar or LinkedIn — see DECISIONS.md."
       />
 
       <IngestionTrigger
         endpoint="/api/admin/ingest/miami-dade-permits"
         label="Miami-Dade County — building permits"
-      />
-
-      <IngestionTrigger
-        endpoint="/api/admin/ingest/bidlog"
-        label="Bid log 2023–2026 — 1,981 jobs from our own bid history"
+        statKeys={[
+          ["fetched", "Fetched"],
+          ["eligible", "Eligible"],
+          ["created", "Created"],
+          ["updated", "Updated"],
+          ["skipped", "Skipped"],
+          ["errors", "Errors"],
+        ]}
       />
 
       <div className="rounded-xl border border-border bg-surface p-5 text-sm text-muted-foreground">
@@ -29,16 +33,37 @@ export default function AdminIngestionPage() {
           duplicating them. Runs automatically every day — see Cron Jobs in the Vercel dashboard.
         </p>
         <p className="mt-2">
-          The bid log import loads the founder&apos;s own 2023–2026 bid history (cleaned and
-          deduplicated — one record per unique job, with the most recent GC relationship attached).
-          GC names and contact emails from it are Pro-gated on the public site. Safe to run more
-          than once: already-imported jobs are recognized and never duplicated.
-        </p>
-        <p className="mt-2">
           Broward, Palm Beach, and Monroe County don&apos;t currently publish an equivalent public,
           queryable permit feed (Broward&apos;s is login-gated; Palm Beach&apos;s isn&apos;t
           internet-reachable; Monroe&apos;s permitting system has no public API). They&apos;ll be
           added if/when that changes, or via a manual data import instead.
+        </p>
+      </div>
+
+      <IngestionTrigger
+        endpoint="/api/admin/newsroom/generate"
+        label="Newsroom — draft articles from public news"
+        statKeys={[
+          ["searched", "Searched"],
+          ["newSources", "New sources"],
+          ["drafted", "Drafted"],
+          ["skippedNotConfident", "Skipped"],
+          ["errors", "Errors"],
+        ]}
+      />
+
+      <div className="rounded-xl border border-border bg-surface p-5 text-sm text-muted-foreground">
+        <p className="mb-2 font-medium text-foreground">How this works</p>
+        <p>
+          Searches the public web (via the Brave Search News API — a licensed search API, not
+          scraping) for South Florida construction and CRE news, then asks Claude to draft an{" "}
+          <strong>original</strong> article from the facts it finds — never copied or closely
+          paraphrased from the source. Every draft lands in{" "}
+          <Link href="/admin/articles" className="text-accent underline">
+            Articles
+          </Link>{" "}
+          with status &quot;In review&quot; and is never auto-published — you review, edit, and
+          publish (or discard) each one by hand. Runs automatically every day.
         </p>
       </div>
     </div>

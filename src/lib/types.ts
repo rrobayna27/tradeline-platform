@@ -243,6 +243,8 @@ export interface Article {
   relatedProjectIds: string[];
   developerName?: string | null;
   projectName?: string | null;
+  researchSourceUrls: string[];
+  draftedByModel?: string | null;
 }
 
 export interface MarketStat {

@@ -232,6 +232,8 @@ function mapArticle(a: PrismaArticle): Article {
     publishedAt: toIso(a.publishedAt) ?? null,
     relatedArticleIds: [],
     relatedProjectIds: [],
+    researchSourceUrls: a.researchSourceUrls,
+    draftedByModel: a.draftedByModel,
   };
 }
 
@@ -536,6 +538,49 @@ export async function getRelatedArticles(article: Article, limit = 3): Promise<A
 export async function getArticlesByProject(projectId: string): Promise<Article[]> {
   const rows = await prisma.article.findMany({ where: { projectId, status: "PUBLISHED" } });
   return rows.map(mapArticle);
+}
+
+// ── Admin: article review/publish workflow ──────────────────────────────
+export async function getAllArticlesForAdmin(status?: Article["status"]): Promise<Article[]> {
+  const rows = await prisma.article.findMany({
+    where: status ? { status } : undefined,
+    orderBy: { createdAt: "desc" },
+  });
+  return rows.map(mapArticle);
+}
+export async function getArticleById(id: string): Promise<Article | undefined> {
+  const row = await prisma.article.findUnique({ where: { id } });
+  return row ? mapArticle(row) : undefined;
+}
+export async function updateArticle(
+  id: string,
+  data: Partial<
+    Pick<
+      Article,
+      | "headline"
+      | "summary"
+      | "body"
+      | "category"
+      | "status"
+      | "location"
+      | "timelineNote"
+      | "whyItMatters"
+      | "marketImpact"
+      | "metaTitle"
+      | "metaDescription"
+    >
+  >
+): Promise<Article> {
+  let publishedAtUpdate: { publishedAt: Date } | Record<string, never> = {};
+  if (data.status === "PUBLISHED") {
+    const existing = await prisma.article.findUnique({ where: { id }, select: { publishedAt: true } });
+    if (!existing?.publishedAt) publishedAtUpdate = { publishedAt: new Date() };
+  }
+  const row = await prisma.article.update({
+    where: { id },
+    data: { ...data, ...publishedAtUpdate },
+  });
+  return mapArticle(row);
 }
 
 // ── Market stats ───────────────────────────────────────────────────────

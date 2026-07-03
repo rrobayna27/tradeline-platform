@@ -479,6 +479,12 @@ model Article {
   ogImageUrl      String?
   canonicalUrl    String?
 
+  // Provenance for AI-assisted drafts (see DECISIONS.md guardrail #4 — every
+  // AI-drafted article sits in IN_REVIEW until a human approves it; these
+  // fields let the reviewer check the underlying facts before publishing).
+  researchSourceUrls String[] @default([])
+  draftedByModel     String?
+
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -490,6 +496,15 @@ model Article {
   @@index([category])
   @@index([slug])
   @@index([publishedAt])
+}
+
+// Tracks which research source URLs the newsroom pipeline has already
+// turned into a draft, so repeated runs don't redraft the same story.
+model NewsroomSourceSeen {
+  id        String   @id @default(cuid())
+  sourceUrl String   @unique
+  title     String?
+  seenAt    DateTime @default(now())
 }
 
 model ArticleRelation {

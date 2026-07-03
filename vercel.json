@@ -3,6 +3,10 @@
     {
       "path": "/api/admin/ingest/miami-dade-permits",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/admin/newsroom/generate",
+      "schedule": "0 14 * * *"
     }
   ]
 }
