@@ -4,12 +4,13 @@ import { Globe, Mail, Phone, ShieldCheck, Award } from "lucide-react";
 import { Section } from "@/components/shared/section";
 import { Badge, SampleDataBadge } from "@/components/ui/badge";
 import { CompanyAvatar } from "@/components/company/company-avatar";
-import { getSubcontractorBySlug, searchSubcontractors } from "@/lib/repositories";
+import { getSubcontractorBySlug } from "@/lib/repositories";
+import { getViewer } from "@/lib/viewer";
+import { ProUpsell } from "@/components/shared/pro-gate";
 
-export async function generateStaticParams() {
-  const { items } = await searchSubcontractors({ pageSize: 1000 });
-  return items.map((s) => ({ slug: s.slug }));
-}
+// Rendered per-request (no generateStaticParams) because contact info is
+// Pro-gated — the page differs per viewer. See getViewer() below.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -30,6 +31,7 @@ export default async function SubDetailPage({ params }: { params: Promise<{ slug
   const sub = await getSubcontractorBySlug(slug);
   if (!sub) notFound();
 
+  const { isPro } = await getViewer();
   const trades = sub.tradeNames ?? [];
   const counties = sub.countyNames ?? [];
 
@@ -111,12 +113,13 @@ export default async function SubDetailPage({ params }: { params: Promise<{ slug
           <div className="rounded-xl border border-border bg-surface p-5">
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Contact</h3>
             <div className="space-y-2 text-sm">
-              {sub.phone && (
+              {!isPro && (sub.phone || sub.email) && <ProUpsell what="Direct phone + email" />}
+              {isPro && sub.phone && (
                 <a href={`tel:${sub.phone}`} className="flex items-center gap-2 text-foreground hover:text-accent">
                   <Phone size={14} /> {sub.phone}
                 </a>
               )}
-              {sub.email && (
+              {isPro && sub.email && (
                 <a href={`mailto:${sub.email}`} className="flex items-center gap-2 text-foreground hover:text-accent">
                   <Mail size={14} /> {sub.email}
                 </a>

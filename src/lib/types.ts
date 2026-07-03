@@ -13,7 +13,8 @@ export type Metro =
   | "TREASURE_COAST"
   | "SOUTHWEST"
   | "TAMPA_BAY"
-  | "ORLANDO_CENTRAL";
+  | "ORLANDO_CENTRAL"
+  | "NORTH_FLORIDA";
 
 export type ProjectStatus =
   | "PROPOSED"

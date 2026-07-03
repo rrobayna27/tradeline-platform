@@ -7,15 +7,15 @@ import { CompanyAvatar } from "@/components/company/company-avatar";
 import { ProjectCard } from "@/components/project/project-card";
 import {
   getGeneralContractorBySlug,
-  getGeneralContractors,
   getProjectsByGeneralContractor,
 } from "@/lib/repositories";
 import { METRO_LABELS } from "@/lib/constants";
+import { getViewer } from "@/lib/viewer";
+import { ProUpsell } from "@/components/shared/pro-gate";
 
-export async function generateStaticParams() {
-  const generalContractors = await getGeneralContractors();
-  return generalContractors.map((g) => ({ slug: g.slug }));
-}
+// Rendered per-request (no generateStaticParams) because contact info is
+// Pro-gated — the page differs per viewer. See getViewer() below.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -36,7 +36,7 @@ export default async function GCDetailPage({ params }: { params: Promise<{ slug:
   const gc = await getGeneralContractorBySlug(slug);
   if (!gc) notFound();
 
-  const projects = await getProjectsByGeneralContractor(gc.id);
+  const [projects, { isPro }] = await Promise.all([getProjectsByGeneralContractor(gc.id), getViewer()]);
   const current = projects.filter((p) => !["COMPLETED", "CANCELLED"].includes(p.status));
   const completed = projects.filter((p) => p.status === "COMPLETED");
 
@@ -90,12 +90,13 @@ export default async function GCDetailPage({ params }: { params: Promise<{ slug:
           <div className="rounded-xl border border-border bg-surface p-5">
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Contact</h3>
             <div className="space-y-2 text-sm">
-              {gc.phone && (
+              {!isPro && (gc.phone || gc.email) && <ProUpsell what="Direct phone + email" />}
+              {isPro && gc.phone && (
                 <a href={`tel:${gc.phone}`} className="flex items-center gap-2 text-foreground hover:text-accent">
                   <Phone size={14} /> {gc.phone}
                 </a>
               )}
-              {gc.email && (
+              {isPro && gc.email && (
                 <a href={`mailto:${gc.email}`} className="flex items-center gap-2 text-foreground hover:text-accent">
                   <Mail size={14} /> {gc.email}
                 </a>

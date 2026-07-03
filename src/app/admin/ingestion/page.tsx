@@ -14,6 +14,11 @@ export default function AdminIngestionPage() {
         label="Miami-Dade County — building permits"
       />
 
+      <IngestionTrigger
+        endpoint="/api/admin/ingest/bidlog"
+        label="Bid log 2023–2026 — 1,981 jobs from our own bid history"
+      />
+
       <div className="rounded-xl border border-border bg-surface p-5 text-sm text-muted-foreground">
         <p className="mb-2 font-medium text-foreground">How this works</p>
         <p>
@@ -22,6 +27,12 @@ export default function AdminIngestionPage() {
           project (status Permitted or Completed), with the contractor of record matched or created
           as a General Contractor. Running it again is safe — it updates existing records instead of
           duplicating them. Runs automatically every day — see Cron Jobs in the Vercel dashboard.
+        </p>
+        <p className="mt-2">
+          The bid log import loads the founder&apos;s own 2023–2026 bid history (cleaned and
+          deduplicated — one record per unique job, with the most recent GC relationship attached).
+          GC names and contact emails from it are Pro-gated on the public site. Safe to run more
+          than once: already-imported jobs are recognized and never duplicated.
         </p>
         <p className="mt-2">
           Broward, Palm Beach, and Monroe County don&apos;t currently publish an equivalent public,

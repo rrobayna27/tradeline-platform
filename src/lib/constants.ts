@@ -56,6 +56,7 @@ export const METRO_LABELS: Record<string, string> = {
   SOUTHWEST: "Southwest Florida",
   TAMPA_BAY: "Tampa Bay",
   ORLANDO_CENTRAL: "Orlando / Central Florida",
+  NORTH_FLORIDA: "North Florida",
 };
 
 export const ARTICLE_CATEGORY_LABELS: Record<string, string> = {

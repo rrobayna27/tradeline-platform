@@ -22,6 +22,7 @@ enum Metro {
   SOUTHWEST // Lee, Collier, Charlotte, Sarasota, Manatee
   TAMPA_BAY // Hillsborough, Pinellas, Pasco, Polk
   ORLANDO_CENTRAL // Orange, Seminole, Osceola, Lake, Brevard, Volusia
+  NORTH_FLORIDA // Duval, St. Johns, Nassau, Clay, Flagler, Alachua
 }
 
 model County {
@@ -521,6 +522,7 @@ model User {
   image         String?
   passwordHash  String?
   role          Role      @default(MEMBER)
+  planTier      PlanTier  @default(FREE)
 
   generalContractor   GeneralContractor? @relation(fields: [generalContractorId], references: [id])
   generalContractorId String?

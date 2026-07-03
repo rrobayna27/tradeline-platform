@@ -11,15 +11,15 @@ import {
   getGeneralContractorById,
   getNearbyProjects,
   getProjectBySlug,
-  searchProjects,
 } from "@/lib/repositories";
 import { PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS, SITE_URL } from "@/lib/constants";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { getViewer } from "@/lib/viewer";
+import { ProLockedValue, ProUpsell } from "@/components/shared/pro-gate";
 
-export async function generateStaticParams() {
-  const { items } = await searchProjects({ pageSize: 1000 });
-  return items.map((p) => ({ slug: p.slug }));
-}
+// Rendered per-request (no generateStaticParams) because the page shows
+// different content to Pro vs. free viewers — see getViewer() below.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -46,11 +46,15 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const project = await getProjectBySlug(slug);
   if (!project) notFound();
 
-  const [nearby, relatedArticles, gc] = await Promise.all([
+  const [nearby, relatedArticles, gc, viewer] = await Promise.all([
     getNearbyProjects(project, 4),
     getArticlesByProject(project.id),
     project.generalContractorId ? getGeneralContractorById(project.generalContractorId) : Promise.resolve(undefined),
+    getViewer(),
   ]);
+  // Full GC company name + contact info are Pro-gated (server-side — the
+  // real values never reach the browser for free/anonymous viewers).
+  const isPro = viewer.isPro;
 
   const trades = project.tradeNames ?? [];
   const latestUpdate = project.updates[0];
@@ -101,7 +105,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <Stat label="Estimated value" value={formatCurrency(project.estimatedValueUsd)} />
             <Stat label="Est. completion" value={formatDate(project.estimatedCompletion)} />
             <Stat label="Developer" value={project.developerName ?? project.owner ?? "—"} />
-            <Stat label="General contractor" value={project.generalContractorName ?? "—"} />
+            <Stat
+              label="General contractor"
+              value={
+                project.generalContractorName
+                  ? isPro
+                    ? project.generalContractorName
+                    : <ProLockedValue />
+                  : "—"
+              }
+            />
           </div>
         </Section>
       </div>
@@ -180,7 +193,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <DetailRow label="County" value={project.countyName} />
               <DetailRow label="City" value={project.cityName} />
               <DetailRow label="Developer" value={project.developerName ?? project.owner} />
-              <DetailRow label="General contractor" value={project.generalContractorName} />
+              <DetailRow
+                label="General contractor"
+                value={project.generalContractorName ? (isPro ? project.generalContractorName : <ProLockedValue />) : undefined}
+              />
               <DetailRow label="Architect" value={project.architect} />
               <DetailRow label="Engineer" value={project.engineer} />
               <DetailRow label="Estimated value" value={formatCurrency(project.estimatedValueUsd)} />
@@ -222,17 +238,20 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               Bid phase: <span className="font-medium text-foreground">{project.bidPhase.replaceAll("_", " ")}</span>
             </p>
             <div className="space-y-2 text-sm">
-              {project.gcContactPhone && (
+              {!isPro && (project.gcContactPhone || project.gcContactEmail || gc) && (
+                <ProUpsell what="GC contact info" />
+              )}
+              {isPro && project.gcContactPhone && (
                 <a href={`tel:${project.gcContactPhone}`} className="flex items-center gap-2 text-foreground hover:text-accent">
                   <Phone size={14} /> {project.gcContactPhone}
                 </a>
               )}
-              {project.gcContactEmail && (
+              {isPro && project.gcContactEmail && (
                 <a href={`mailto:${project.gcContactEmail}`} className="flex items-center gap-2 text-foreground hover:text-accent">
                   <Mail size={14} /> {project.gcContactEmail}
                 </a>
               )}
-              {(project.gcContactWebsite || gc?.website) && (
+              {isPro && (project.gcContactWebsite || gc?.website) && (
                 <a
                   href={project.gcContactWebsite ?? gc?.website ?? "#"}
                   target="_blank"
@@ -246,7 +265,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <p className="text-xs text-muted-foreground">No public GC contact on file yet.</p>
               )}
             </div>
-            {gc && (
+            {gc && isPro && (
               <LinkButton href={`/general-contractors/${gc.slug}`} variant="outline" size="sm" className="mt-4 w-full">
                 View GC profile
               </LinkButton>
@@ -270,7 +289,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   );
 }
 
-function Stat({ label, value }: { label: string; value?: string | null }) {
+function Stat({ label, value }: { label: string; value?: React.ReactNode | null }) {
   return (
     <div>
       <p className="font-mono text-lg font-semibold tabular-nums text-foreground">{value ?? "—"}</p>
@@ -279,7 +298,7 @@ function Stat({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
-function DetailRow({ label, value }: { label: string; value?: string | null }) {
+function DetailRow({ label, value }: { label: string; value?: React.ReactNode | null }) {
   if (!value) return null;
   return (
     <div className="flex items-center justify-between gap-4 border-b border-border pb-3 last:border-none last:pb-0">

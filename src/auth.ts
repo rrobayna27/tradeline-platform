@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { findDemoUser } from "@/lib/demo-users";
-import type { Role } from "@/lib/types";
+import type { PlanTier, Role } from "@/lib/types";
 
 // Production note: swap `findDemoUser` for a real Prisma lookup once the
 // database is live (see src/lib/types.ts for why Prisma isn't wired in this
@@ -30,19 +30,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
 
-        return { id: user.id, name: user.name, email: user.email, role: user.role };
+        return { id: user.id, name: user.name, email: user.email, role: user.role, planTier: user.planTier };
       },
     }),
   ],
   callbacks: {
     jwt({ token, user }) {
-      if (user) token.role = user.role as Role | undefined;
+      if (user) {
+        token.role = user.role as Role | undefined;
+        token.planTier = user.planTier as PlanTier | undefined;
+      }
       return token;
     },
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub ?? "";
         session.user.role = (token.role as Role | undefined) ?? "MEMBER";
+        session.user.planTier = (token.planTier as PlanTier | undefined) ?? "FREE";
       }
       return session;
     },
