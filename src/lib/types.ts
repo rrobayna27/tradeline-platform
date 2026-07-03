@@ -243,7 +243,7 @@ export interface Article {
   relatedProjectIds: string[];
   developerName?: string | null;
   projectName?: string | null;
-  researchSourceUrls: string[];
+  researchSourceUrls?: string[];
   draftedByModel?: string | null;
 }
 

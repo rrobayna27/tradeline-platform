@@ -22,14 +22,14 @@ export default async function AdminArticleDetailPage({ params }: { params: Promi
         action={<Badge>{article.status.replace("_", " ")}</Badge>}
       />
 
-      {article.researchSourceUrls.length > 0 && (
+      {(article.researchSourceUrls?.length ?? 0) > 0 && (
         <div className="mb-6 rounded-xl border border-highlight/30 bg-highlight/5 p-4 text-sm">
           <p className="mb-2 font-medium text-foreground">
             AI-assisted draft{article.draftedByModel ? ` (${article.draftedByModel})` : ""} — verify against the
             source before publishing
           </p>
           <ul className="space-y-1">
-            {article.researchSourceUrls.map((url) => (
+            {article.researchSourceUrls?.map((url) => (
               <li key={url}>
                 <a
                   href={url}
