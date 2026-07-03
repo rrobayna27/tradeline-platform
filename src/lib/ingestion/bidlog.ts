@@ -90,7 +90,11 @@ export async function ingestBidLog(): Promise<IngestSummary> {
     errors: [],
   };
 
-  // 1. Counties (create any that don't exist yet)
+  // 1. Counties (create any that don't exist yet). Matched by slug, not
+  //    name — the app's existing counties are named "Miami-Dade County"
+  //    etc. (see src/data/sample/geography.ts) while this bid log's keys
+  //    are bare ("Miami-Dade"), so a name-based upsert would try to create
+  //    a duplicate row that collides on the slug unique constraint.
   const countyNames = new Set<string>([FALLBACK_COUNTY]);
   for (const j of jobs) if (j.county) countyNames.add(j.county);
   const countyIdByName = new Map<string, string>();
@@ -100,10 +104,11 @@ export async function ingestBidLog(): Promise<IngestSummary> {
       summary.errors.push(`No metro mapping for county "${name}" — skipped its jobs.`);
       continue;
     }
+    const slug = slugify(name);
     const county = await prisma.county.upsert({
-      where: { name },
+      where: { slug },
       update: {},
-      create: { name, slug: slugify(name), metro },
+      create: { name: `${name} County`, slug, metro },
     });
     countyIdByName.set(name, county.id);
   }
